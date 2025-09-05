@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import json
-import logging.config
 import sys
 from unittest import mock
 from unittest.mock import PropertyMock
@@ -32,6 +31,7 @@ from airflow.api_fastapi.common.dagbag import create_dag_bag, dag_bag_from_app
 from airflow.models.dag import DAG
 from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.sdk import task
+from airflow.utils.log.log_reader import TaskLogReader
 from airflow.utils.types import DagRunType
 
 from tests_common.test_utils.dag import sync_dag_to_db
@@ -149,7 +149,7 @@ class TestTaskInstancesLog:
             log = dir_path / "attempt=2.log"
             log.write_text("Log for testing 2.")
 
-        handler = logging.getLogger("airflow.task").handlers[0]
+        handler = TaskLogReader().log_handler
         monkeypatch.setattr(handler, "local_base", self.log_dir)
 
     def teardown_method(self):

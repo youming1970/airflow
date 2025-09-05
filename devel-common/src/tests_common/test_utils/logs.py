@@ -299,7 +299,7 @@ class StructlogCapture:
                 0,
                 entry["event"],
                 (),
-                entry.get("exc_info"),
+                entry.get("exc_info") or entry.get("exception"),
                 None,
                 None,
             )
