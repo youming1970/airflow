@@ -189,6 +189,8 @@ class StructlogCapture:
 
         event_dict["event"] = str(event_dict["event"])
         event_dict["log_level"] = map_method_name(method_name)
+        if name := getattr(logger, "name", None):
+            event_dict["logger_name"] = name
 
         # Capture the current exception. This mirrors the "ExceptionRenderer", but much more minimal for
         # testing
@@ -229,32 +231,6 @@ class StructlogCapture:
     def messages(self):
         """All the event messages as a list."""
         return [e["event"] for e in self.entries]
-
-    def _force_enable_logging(self, level: int, logger_obj: logging.Logger) -> int:
-        """
-        Enable the desired logging level if the global level was disabled via ``logging.disabled``.
-
-        Only enables logging levels greater than or equal to the requested ``level``.
-
-        Does nothing if the desired ``level`` wasn't disabled.
-
-        :param level:
-            The logger level caplog should capture.
-            All logging is enabled if a non-standard logging level string is supplied.
-            Valid level strings are in :data:`logging._nameToLevel`.
-        :param logger_obj: The logger object to check.
-
-        :return: The original disabled logging level.
-        """
-        original_disable_level: int = logger_obj.manager.disable
-
-        if not logger_obj.isEnabledFor(level):
-            # Each level is `10` away from other levels.
-            # https://docs.python.org/3/library/logging.html#logging-levels
-            disable_level = max(level - 10, logging.NOTSET)
-            logging.disable(disable_level)
-
-        return original_disable_level
 
     @contextmanager
     def at_level(self, level: str | int, logger: str | None = None):

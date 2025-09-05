@@ -97,6 +97,7 @@ class TestCloudRemoteLogIO:
         conn.create_log_group(logGroupName=self.remote_log_group)
 
         processors = structlog.get_config()["processors"]
+        logger_factory = structlog.get_config()["logger_factory"]
         old_processors = processors.copy()
 
         try:
@@ -131,7 +132,7 @@ class TestCloudRemoteLogIO:
             # remove LogCapture and restore original processors
             processors.clear()
             processors.extend(old_processors)
-            structlog.configure(processors=old_processors)
+            structlog.configure(processors=old_processors, logger_factory=logger_factory)
 
     @time_machine.travel(datetime(2025, 3, 27, 21, 58, 1, 2345), tick=False)
     def test_log_message(self):

@@ -2076,13 +2076,20 @@ def cap_structlog(monkeypatch, request):
     dict_tracebacks = structlog.processors.ExceptionRenderer(dict_exc_formatter)
     timestamper = structlog.processors.MaybeTimeStamper(fmt="iso")
 
-    log_level = logging.INFO
+    level = logging.INFO
     for setting_name in ("log_cli_level", "log_level"):
         log_level = request.config.getoption(setting_name)
         if log_level is None:
             log_level = request.config.getini(setting_name)
         if log_level:
+            level = structlog.processors.NAME_TO_LEVEL[log_level.lower()]
             break
+
+    monkeypatch.setattr(logging.root, "level", level)
+    # Ensure the handler doesn't filter anything itself (in stblib both loggers and handlers have their own
+    # independent level!)
+    monkeypatch.setattr(handler, "level", 0)
+    monkeypatch.setattr(handler, "filters", [stdlib_filter])
 
     try:
         # clear processors list and use LogCapture for testing
@@ -2091,8 +2098,6 @@ def cap_structlog(monkeypatch, request):
         processors.append(dict_tracebacks)
         processors.append(cap)
         configure(processors=processors)
-        monkeypatch.setattr(handler, "level", structlog.stdlib.NAME_TO_LEVEL[log_level.lower()])
-        monkeypatch.setattr(handler, "filters", [stdlib_filter])
         yield cap
     finally:
         cap._finalize()
